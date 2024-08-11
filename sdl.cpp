@@ -6,6 +6,7 @@ and may not be redistributed without written permission.*/
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include "LTexture.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -22,18 +23,21 @@ void close();
 
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
+SDL_Renderer* gRenderer = NULL; 
+
+LTexture gFooTexture( &gRenderer );
+LTexture gBackgroundTexture( &gRenderer );
+
+SDL_Texture* gTexture = NULL;
 
 SDL_Texture* loadTexture( std::string path );
-
-SDL_Texture* gTexture = NULL; 
-
-SDL_Renderer* gRenderer = NULL; 
 
 bool init()
 {
 	//Initialization flag
 	bool success = true;
 
+	printf("init started");
 	//Initialize SDL
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
 	{
@@ -70,6 +74,8 @@ bool init()
 		}
 	}
 
+	printf("init done");
+
 	return success;
 }
 
@@ -98,25 +104,28 @@ SDL_Texture* loadTexture( std::string path )
 
 bool loadMedia()
 {
-	//Loading success flag
 	bool success = true;
 
-	//Load PNG surface
-	gTexture = loadTexture( "image.png" );
-	if( gTexture == NULL )
+	if( !gFooTexture.loadFromFile( "foo.png" ) )
 	{
-		printf( "Failed to load texture image!\n" );
+		printf( "Failed to load Foo's texture image!\n" );
 		success = false;
 	}
 
-	return success;
+	if ( !gBackgroundTexture.loadFromFile( "background.png" ) )
+	{
+		printf( "Failed to load background texture image!\n" );
+		success = false;
+	}
+
+	return success; 
 }
 
 void close()
 {
 	//Free loaded image
-	SDL_DestroyTexture( gTexture );
-	gTexture = NULL;
+	gFooTexture.free();
+	gBackgroundTexture.free(); 
 
 	//Destroy window
 	SDL_DestroyRenderer( gRenderer );
@@ -164,11 +173,17 @@ int main( int argc, char* args[] )
 					}
 				}
 
-				SDL_RenderClear( gRenderer );
+				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+                SDL_RenderClear( gRenderer );
 
-				SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
+                //Render background texture to screen
+                gBackgroundTexture.render( 0, 0 );
 
-				SDL_RenderPresent( gRenderer );
+                //Render Foo' to the screen
+                gFooTexture.render( 240, 190 );
+
+                //Update screen
+                SDL_RenderPresent( gRenderer );
 			}
 		}
 	}
