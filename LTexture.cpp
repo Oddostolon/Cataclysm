@@ -47,10 +47,17 @@ bool LTexture::loadFromFile( std::string path)
     return mTexture != NULL;
 }
 
-void LTexture::render( int x, int y )
+void LTexture::render( int x, int y, SDL_Rect* clip /*= NULL*/ )
 {
     SDL_Rect renderQuad = { x, y, mWidth, mHeight };
-    SDL_RenderCopy( *mRenderer, mTexture, NULL, &renderQuad );
+
+    if ( clip != NULL )
+    {
+        renderQuad.w = clip->w;
+        renderQuad.h = clip->h;
+    }
+    
+    SDL_RenderCopy( *mRenderer, mTexture, clip, &renderQuad );
 }
 
 int LTexture::getWidth()
