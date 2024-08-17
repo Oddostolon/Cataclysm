@@ -13,6 +13,8 @@ class LTexture
 
         void render( int x, int y, SDL_Rect* clip = NULL );
 
+        void setColor( Uint8 red, Uint8 green, Uint8 blue );
+
         int getWidth();
         int getHeight();
 
