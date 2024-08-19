@@ -11,6 +11,7 @@ and may not be redistributed without written permission.*/
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+const int WALKING_ANIMATION_FRAMES = 4;
 
 //Starts up SDL and creates window
 bool init();
@@ -27,7 +28,7 @@ SDL_Renderer* gRenderer = NULL;
 
 SDL_Texture* loadTexture( std::string path );
 
-LTexture gModulatedTexture( &gRenderer );
+LTexture gNavySealTexture( &gRenderer );
 
 bool init()
 {
@@ -51,7 +52,7 @@ bool init()
 		}
 		else 
 		{
-			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED );
+			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error %s\n", SDL_GetError() );
@@ -103,12 +104,12 @@ bool loadMedia()
 {
 	bool success = true;
 
-	if( !gModulatedTexture.loadFromFile( "sprites.png" ))
+	if( !gNavySealTexture.loadFromFile( "navyseal.png" ))
 	{
 		printf( "Failed to load sprite sheet texture!\n" );
 		success = false;
 	}
-
+	
 	return success; 
 }
 
@@ -147,9 +148,9 @@ int main( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			Uint8 rMod = 255;
-			Uint8 gMod = 255;
-			Uint8 bMod = 255;
+			double degrees = 0; 
+
+			SDL_RendererFlip flipType = SDL_FLIP_NONE;
 
 			//While application is running
 			while( !quit )
@@ -162,39 +163,29 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					else if ( e.type == SDL_KEYDOWN )
-					{
-						switch( e.key.keysym.sym )
-						{
-							case SDLK_q:
-							rMod += 32;
-							break;
-							case SDLK_w:
-							bMod += 32;
-							break;
-							case SDLK_e:
-							gMod += 32;
-							break;
-							case SDLK_a:
-							rMod -= 32;
-							break;
-							case SDLK_s:
-							bMod -= 32;
-							break;
-							case SDLK_d:
-							gMod -= 32;
-							break;
-						}
-					}
 				}
 
-				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0 );
+				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				gModulatedTexture.setColor( rMod, gMod, bMod );
-				gModulatedTexture.render( 0, 0 );
+				gNavySealTexture.render( ( SCREEN_WIDTH - gNavySealTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gNavySealTexture.getHeight() ) / 2, NULL, degrees, NULL, flipType );
 
                 SDL_RenderPresent( gRenderer );
+
+				++degrees;
+				if( degrees >= 360 )
+				{
+					degrees = 0;
+					switch( flipType )
+					{
+						case SDL_FLIP_NONE:
+						flipType = SDL_FLIP_HORIZONTAL;
+						break;
+						case SDL_FLIP_HORIZONTAL:
+						flipType = SDL_FLIP_NONE;
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -204,3 +195,6 @@ int main( int argc, char* args[] )
 
 	return 0;
 }
+
+
+// 823 × 821
