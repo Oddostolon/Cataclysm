@@ -7,3 +7,5 @@ const int BUTTON_WIDTH = 300;
 const int BUTTON_HEIGHT = 200;
 const int TOTAL_BUTTONS = 4;
 
+const int JOYSTICK_DEADZONE = 8000;
+

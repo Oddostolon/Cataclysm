@@ -21,9 +21,9 @@ void close();
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL; 
-LTexture gButtonSprites( &gRenderer );
+LTexture gArrowTexture( &gRenderer );
 
-LButton gButtons[ TOTAL_BUTTONS ];
+SDL_Joystick* gGameController = NULL; 
 
 bool init()
 {
@@ -31,13 +31,31 @@ bool init()
 	bool success = true;
 
 	//Initialize SDL
-	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
 	{
 		printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
 		success = false;
 	}
 	else
 	{
+		if( !SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" ) )
+		{
+			printf( "Warning: Linear texture filtering not enabled!\n" );
+		}
+
+		if( SDL_NumJoysticks() < 1 )
+		{
+			printf( "Warning: No joysticks connected!\n" );
+		}
+		else
+		{
+			gGameController = SDL_JoystickOpen( 0 );
+			if( gGameController == NULL )
+			{
+				printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
+			}
+		}
+
 		gWindow = SDL_CreateWindow( " SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
 		if( gWindow == NULL )
 		{
@@ -79,23 +97,22 @@ bool loadMedia()
 {
 	bool success = true;
 
-	gButtonSprites.loadFromFile( "buttonSpriteSheet.png" );
-
-	for( int i = 0; i < TOTAL_BUTTONS; i++ )
+	if( !gArrowTexture.loadFromFile( "arrow.png" ) )
 	{
-		gButtons[ i ].setSpriteSheet( &gButtonSprites );
+		printf( "Couldn't load texture from file" );
+		success = false;
 	}
-
-	gButtons[ 0 ].setPosition( 0, 0 );
-	gButtons[ 1 ].setPosition( SCREEN_WIDTH - BUTTON_WIDTH, 0 );
-	gButtons[ 2 ].setPosition( 0, SCREEN_HEIGHT - BUTTON_HEIGHT );
-	gButtons[ 3 ].setPosition( SCREEN_WIDTH - BUTTON_WIDTH, SCREEN_HEIGHT - BUTTON_HEIGHT );
 
 	return success; 
 }
 
 void close()
 {
+	gArrowTexture.free();
+
+	SDL_JoystickClose( gGameController );
+	gGameController = NULL;
+
 	//Destroy window
 	SDL_DestroyRenderer( gRenderer );
 	SDL_DestroyWindow( gWindow );
@@ -130,6 +147,9 @@ int main( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
+			int xDir = 0;
+			int yDir = 0;
+
 			//While application is running
 			while( !quit )
 			{
@@ -141,20 +161,55 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-
-					for( int i = 0; i < TOTAL_BUTTONS; ++i )
+					else if( e.type == SDL_JOYAXISMOTION )
 					{
-						gButtons[ i ].handleEvent( &e );
+						if( e.jaxis.which == 0 )
+						{
+							if( e.jaxis.axis == 0 )
+							{
+								if( e.jaxis.value < -JOYSTICK_DEADZONE )
+								{
+									xDir = -1;
+								}
+								else if( e.jaxis.value > JOYSTICK_DEADZONE )
+								{
+									xDir = 1;
+								}
+								else 
+								{
+									xDir = 0;
+								}
+							}
+							else if( e.jaxis.axis == 1 )
+							{
+								if( e.jaxis.value < -JOYSTICK_DEADZONE )
+								{
+									yDir = -1;
+								}
+								else if( e.jaxis.value > JOYSTICK_DEADZONE )
+								{
+									yDir = 1;
+								}
+								else 
+								{
+									yDir = 0;
+								}
+							}
+						}
 					}
 				}
 
-				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0 );
+				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				for( int i = 0; i < TOTAL_BUTTONS; ++i )
-				{
-					gButtons[ i ].render();
-				}
+				double joystickAngle = atan2( (double)yDir, (double)xDir ) * ( 180.0 / M_PI );
+                
+                if( xDir == 0 && yDir == 0 )
+                {
+                    joystickAngle = 0;
+                }
+				
+				gArrowTexture.render( ( SCREEN_WIDTH - gArrowTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gArrowTexture.getHeight() ) / 2, NULL, joystickAngle );
 
                 SDL_RenderPresent( gRenderer );
 			}
