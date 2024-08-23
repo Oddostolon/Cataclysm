@@ -1,7 +1,3 @@
-/*This source code copyrighted by Lazy Foo' Productions 2004-2023
-and may not be redistributed without written permission.*/
-
-//Using SDL, SDL_image, standard IO, and strings
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -12,10 +8,6 @@ and may not be redistributed without written permission.*/
 #include "LButton.h"
 #include "constants.h"
 
-//Screen dimension constants
-
-
-//Starts up SDL and creates window
 bool init();
 
 SDL_Texture* loadTexture( std::string path );
@@ -26,11 +18,10 @@ bool loadMedia();
 //Frees media and shuts down SDL
 void close();
 
-
-
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL; 
+LTexture gButtonSprites( &gRenderer );
 
 LButton gButtons[ TOTAL_BUTTONS ];
 
@@ -84,32 +75,21 @@ bool init()
 	return success;
 }
 
-SDL_Texture* loadTexture( std::string path )
-{
-	SDL_Texture* newTexture = NULL;
-
-	SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
-	if( loadedSurface == NULL )
-	{
-		printf( "Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError() );
-	}
-	else
-	{
-		newTexture = SDL_CreateTextureFromSurface( gRenderer, loadedSurface );
-		if( newTexture == NULL )
-		{
-			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
-		}
-
-		SDL_FreeSurface( loadedSurface );
-	}
-
-	return newTexture;
-}
-
 bool loadMedia()
 {
 	bool success = true;
+
+	gButtonSprites.loadFromFile( "buttonSpriteSheet.png" );
+
+	for( int i = 0; i < TOTAL_BUTTONS; i++ )
+	{
+		gButtons[ i ].setSpriteSheet( &gButtonSprites );
+	}
+
+	gButtons[ 0 ].setPosition( 0, 0 );
+	gButtons[ 1 ].setPosition( SCREEN_WIDTH - BUTTON_WIDTH, 0 );
+	gButtons[ 2 ].setPosition( 0, SCREEN_HEIGHT - BUTTON_HEIGHT );
+	gButtons[ 3 ].setPosition( SCREEN_WIDTH - BUTTON_WIDTH, SCREEN_HEIGHT - BUTTON_HEIGHT );
 
 	return success; 
 }

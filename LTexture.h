@@ -2,12 +2,11 @@
 
 #include <SDL2/SDL.h>
 #include <string>
-#include <SDL2/SDL_ttf.h>
 
 class LTexture
 {
     public: 
-        LTexture(SDL_Renderer** renderer);
+        LTexture( SDL_Renderer** renderer );
         ~LTexture();
 
         bool loadFromFile( std::string path );

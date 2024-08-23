@@ -1,12 +1,14 @@
 #include "LButton.h"
 
-LButton::LButton( LTexture* spriteSheetTexture )
+LButton::LButton()
 {
     mPosition.x = 0;
     mPosition.y = 0;
 
     mCurrentSprite = BUTTON_SPRITE_MOUSE_OUT;
-    mButtonSpriteSheetTexture = spriteSheetTexture;
+    mButtonSpriteClip.w = BUTTON_WIDTH;
+    mButtonSpriteClip.h = BUTTON_HEIGHT;
+    mButtonSpriteClip.x = 0;
 }
 
 void LButton::setPosition( int x, int y )
@@ -15,9 +17,14 @@ void LButton::setPosition( int x, int y )
     mPosition.y = y;
 }
 
+void LButton::setSpriteSheet( LTexture* spriteSheetTexture )
+{
+    mButtonSpriteSheetTexture = spriteSheetTexture;
+}
+
 void LButton::render()
 {
-    mButtonSpriteSheetTexture->render( mPosition.x, mPosition.y, )
+    mButtonSpriteSheetTexture->render( mPosition.x, mPosition.y, &mButtonSpriteClip );
 }
 
 void LButton::handleEvent( SDL_Event* e )
@@ -67,5 +74,12 @@ void LButton::handleEvent( SDL_Event* e )
                 break;
             }
         }
+
+        setSpriteClip();
     }
+}
+
+void LButton::setSpriteClip()
+{
+    mButtonSpriteClip.y = BUTTON_HEIGHT * mCurrentSprite;
 }
