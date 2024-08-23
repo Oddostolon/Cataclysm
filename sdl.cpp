@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include <string>
 #include <cmath>
@@ -8,22 +9,23 @@
 #include "LButton.h"
 #include "constants.h"
 
+#pragma region FUNCTION_DECLARATIONS
 bool init();
-
-SDL_Texture* loadTexture( std::string path );
-
-//Loads media
 bool loadMedia();
-
-//Frees media and shuts down SDL
 void close();
+#pragma endregion
 
-//The window we'll be rendering to
-SDL_Window* gWindow = NULL;
-SDL_Renderer* gRenderer = NULL; 
-LTexture gArrowTexture( &gRenderer );
+SDL_Window* 	gWindow 	= NULL;
+SDL_Renderer* 	gRenderer 	= NULL; 
 
-SDL_Joystick* gGameController = NULL; 
+Mix_Music* 		gMusic 		= NULL; 
+
+Mix_Chunk* 		gScratch 	= NULL; 
+Mix_Chunk* 		gHigh 		= NULL;
+Mix_Chunk* 		gMedium 	= NULL;
+Mix_Chunk* 		gLow 		= NULL;
+
+LTexture		gPromptTexture( &gRenderer );
 
 bool init()
 {
@@ -31,31 +33,13 @@ bool init()
 	bool success = true;
 
 	//Initialize SDL
-	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
+	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0 )
 	{
 		printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
 		success = false;
 	}
 	else
 	{
-		if( !SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" ) )
-		{
-			printf( "Warning: Linear texture filtering not enabled!\n" );
-		}
-
-		if( SDL_NumJoysticks() < 1 )
-		{
-			printf( "Warning: No joysticks connected!\n" );
-		}
-		else
-		{
-			gGameController = SDL_JoystickOpen( 0 );
-			if( gGameController == NULL )
-			{
-				printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
-			}
-		}
-
 		gWindow = SDL_CreateWindow( " SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
 		if( gWindow == NULL )
 		{
@@ -80,10 +64,9 @@ bool init()
 					printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
 					success = false;
 				}
-
-				if( TTF_Init() == -1 )
+				if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
 				{
-					printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
+					printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
 					success = false;
 				}
 			}
@@ -97,10 +80,44 @@ bool loadMedia()
 {
 	bool success = true;
 
-	if( !gArrowTexture.loadFromFile( "arrow.png" ) )
+	if( !gPromptTexture.loadFromFile( "prompt.png" ) )
 	{
-		printf( "Couldn't load texture from file" );
+		printf( "Failed to load prompt texture!\n" );
 		success = false;
+	}
+
+	gMusic = Mix_LoadMUS( "beat.wav" );
+	if( gMusic == NULL )
+	{
+		printf( "Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError() );
+		success = false;
+	}
+
+	gScratch = Mix_LoadWAV( "scratch.wav" );
+	if( gScratch == NULL )
+	{
+		printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+		success = false;
+	}
+
+	gHigh = Mix_LoadWAV( "high.wav" );
+	if( gHigh == NULL )
+	{
+		printf( "Failed to load high sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+		success = false;
+	}
+
+	gMedium = Mix_LoadWAV( "medium.wav" );
+	if( gMedium == NULL )
+	{
+		printf( "Failed to load medium sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+		success = false;
+	}
+
+	gLow = Mix_LoadWAV( "low.wav" );
+	if( gLow == NULL )
+	{
+		printf( "Failed to load low sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
 	}
 
 	return success; 
@@ -108,10 +125,20 @@ bool loadMedia()
 
 void close()
 {
-	gArrowTexture.free();
+	gPromptTexture.free();
 
-	SDL_JoystickClose( gGameController );
-	gGameController = NULL;
+	Mix_FreeChunk( gScratch );
+	Mix_FreeChunk( gHigh );
+	Mix_FreeChunk( gMedium );
+	Mix_FreeChunk( gLow );
+
+	gScratch = NULL; 
+	gHigh = NULL; 
+	gMedium = NULL;
+	gLow = NULL; 
+
+	Mix_FreeMusic( gMusic );
+	gMusic = NULL;
 
 	//Destroy window
 	SDL_DestroyRenderer( gRenderer );
@@ -120,7 +147,7 @@ void close()
 	gRenderer = NULL;
 
 	//Quit SDL subsystems
-	TTF_Quit();
+	Mix_Quit();
 	IMG_Quit();
 	SDL_Quit();
 }
@@ -161,40 +188,47 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					else if( e.type == SDL_JOYAXISMOTION )
+					else if( e.type == SDL_KEYDOWN )
 					{
-						if( e.jaxis.which == 0 )
+						switch ( e.key.keysym.sym )
 						{
-							if( e.jaxis.axis == 0 )
-							{
-								if( e.jaxis.value < -JOYSTICK_DEADZONE )
+							case SDLK_1:
+								Mix_PlayChannel( -1, gHigh, 0 );
+								break;
+							
+							case SDLK_2: 
+								Mix_PlayChannel( -1, gMedium, 0 );
+								break;
+
+							case SDLK_3:
+								Mix_PlayChannel( -1, gLow, 0 );
+								break;
+							
+							case SDLK_4:
+								Mix_PlayChannel( -1, gScratch, 0 );
+								break;
+
+							case SDLK_9:
+								if( Mix_PlayingMusic() == 0 )
 								{
-									xDir = -1;
-								}
-								else if( e.jaxis.value > JOYSTICK_DEADZONE )
-								{
-									xDir = 1;
-								}
-								else 
-								{
-									xDir = 0;
-								}
-							}
-							else if( e.jaxis.axis == 1 )
-							{
-								if( e.jaxis.value < -JOYSTICK_DEADZONE )
-								{
-									yDir = -1;
-								}
-								else if( e.jaxis.value > JOYSTICK_DEADZONE )
-								{
-									yDir = 1;
+									Mix_PlayMusic( gMusic, -1 );
 								}
 								else 
 								{
-									yDir = 0;
+									if( Mix_PausedMusic() == 1 )
+									{
+										Mix_ResumeMusic();
+									}
+									else
+									{
+										Mix_PauseMusic();
+									}
 								}
-							}
+								break;
+							
+							case SDLK_0:
+								Mix_HaltMusic();
+								break;
 						}
 					}
 				}
@@ -202,15 +236,8 @@ int main( int argc, char* args[] )
 				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				double joystickAngle = atan2( (double)yDir, (double)xDir ) * ( 180.0 / M_PI );
-                
-                if( xDir == 0 && yDir == 0 )
-                {
-                    joystickAngle = 0;
-                }
+				gPromptTexture.render( 0, 0 );
 				
-				gArrowTexture.render( ( SCREEN_WIDTH - gArrowTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gArrowTexture.getHeight() ) / 2, NULL, joystickAngle );
-
                 SDL_RenderPresent( gRenderer );
 			}
 		}
