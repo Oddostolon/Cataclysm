@@ -52,6 +52,38 @@ void LTexture::setColor( Uint8 red, Uint8 green, Uint8 blue )
     SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
+#if defined(SDL_TTF_MAJOR_VERSION)
+bool LTexture::loadFromRenderedText( TTF_Font* font, std::string textureText, SDL_Color textColor )
+{
+    free();
+
+    SDL_Surface* textSurface = TTF_RenderText_Solid( font, textureText.c_str(), textColor );
+    if( textSurface == NULL )
+    {
+        printf( "Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError() );
+    }
+    else 
+    {
+        mTexture = SDL_CreateTextureFromSurface( *mRenderer, textSurface );
+        if( mTexture == NULL )
+        {
+            printf( "Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError() );
+        }
+        else 
+        {
+            mWidth = textSurface->w;
+            mHeight = textSurface->h;
+        }
+
+        SDL_FreeSurface( textSurface );
+    }
+
+    bool success = mTexture != NULL;
+
+    return mTexture != NULL;
+}
+#endif
+
 void LTexture::render( int x, int y, SDL_Rect* clip /*= NULL*/, double angle /*= 0.0*/, SDL_Point* center /*= NULL*/, SDL_RendererFlip flip /*= SDL_FLIP_NONE*/)
 {
     SDL_Rect renderQuad = { x, y, mWidth, mHeight };

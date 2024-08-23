@@ -4,17 +4,21 @@ and may not be redistributed without written permission.*/
 //Using SDL, SDL_image, standard IO, and strings
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include <string>
+#include <cmath>
 #include "LTexture.h"
+#include "LButton.h"
+#include "constants.h"
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
-const int WALKING_ANIMATION_FRAMES = 4;
+
 
 //Starts up SDL and creates window
 bool init();
+
+SDL_Texture* loadTexture( std::string path );
 
 //Loads media
 bool loadMedia();
@@ -22,20 +26,19 @@ bool loadMedia();
 //Frees media and shuts down SDL
 void close();
 
+
+
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL; 
 
-SDL_Texture* loadTexture( std::string path );
-
-LTexture gNavySealTexture( &gRenderer );
+LButton gButtons[ TOTAL_BUTTONS ];
 
 bool init()
 {
 	//Initialization flag
 	bool success = true;
 
-	printf("init started");
 	//Initialize SDL
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
 	{
@@ -68,11 +71,15 @@ bool init()
 					printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
 					success = false;
 				}
+
+				if( TTF_Init() == -1 )
+				{
+					printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
+					success = false;
+				}
 			}
 		}
 	}
-
-	printf("init done");
 
 	return success;
 }
@@ -104,12 +111,6 @@ bool loadMedia()
 {
 	bool success = true;
 
-	if( !gNavySealTexture.loadFromFile( "navyseal.png" ))
-	{
-		printf( "Failed to load sprite sheet texture!\n" );
-		success = false;
-	}
-	
 	return success; 
 }
 
@@ -122,6 +123,7 @@ void close()
 	gRenderer = NULL;
 
 	//Quit SDL subsystems
+	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
 }
@@ -148,10 +150,6 @@ int main( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			double degrees = 0; 
-
-			SDL_RendererFlip flipType = SDL_FLIP_NONE;
-
 			//While application is running
 			while( !quit )
 			{
@@ -163,29 +161,22 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-				}
 
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				gNavySealTexture.render( ( SCREEN_WIDTH - gNavySealTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gNavySealTexture.getHeight() ) / 2, NULL, degrees, NULL, flipType );
-
-                SDL_RenderPresent( gRenderer );
-
-				++degrees;
-				if( degrees >= 360 )
-				{
-					degrees = 0;
-					switch( flipType )
+					for( int i = 0; i < TOTAL_BUTTONS; ++i )
 					{
-						case SDL_FLIP_NONE:
-						flipType = SDL_FLIP_HORIZONTAL;
-						break;
-						case SDL_FLIP_HORIZONTAL:
-						flipType = SDL_FLIP_NONE;
-						break;
+						gButtons[ i ].handleEvent( &e );
 					}
 				}
+
+				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0 );
+				SDL_RenderClear( gRenderer );
+
+				for( int i = 0; i < TOTAL_BUTTONS; ++i )
+				{
+					gButtons[ i ].render();
+				}
+
+                SDL_RenderPresent( gRenderer );
 			}
 		}
 	}
@@ -195,6 +186,3 @@ int main( int argc, char* args[] )
 
 	return 0;
 }
-
-
-// 823 × 821
