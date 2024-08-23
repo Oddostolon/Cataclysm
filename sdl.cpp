@@ -1,9 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include "LTexture.h"
 #include "LButton.h"
@@ -18,12 +18,7 @@ void close();
 SDL_Window* 	gWindow 	= NULL;
 SDL_Renderer* 	gRenderer 	= NULL; 
 
-Mix_Music* 		gMusic 		= NULL; 
-
-Mix_Chunk* 		gScratch 	= NULL; 
-Mix_Chunk* 		gHigh 		= NULL;
-Mix_Chunk* 		gMedium 	= NULL;
-Mix_Chunk* 		gLow 		= NULL;
+TTF_Font* 		gFont 		= NULL;
 
 LTexture		gPromptTexture( &gRenderer );
 
@@ -80,44 +75,21 @@ bool loadMedia()
 {
 	bool success = true;
 
-	if( !gPromptTexture.loadFromFile( "prompt.png" ) )
+	gFont = TTF_OpenFont( "lazy.ttf" );
+	if( gFont == NULL )
 	{
-		printf( "Failed to load prompt texture!\n" );
+		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
 		success = false;
 	}
-
-	gMusic = Mix_LoadMUS( "beat.wav" );
-	if( gMusic == NULL )
+	else 
 	{
-		printf( "Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError() );
-		success = false;
-	}
+		SDL_Color textColor = { 0, 0, 0, 255 };
 
-	gScratch = Mix_LoadWAV( "scratch.wav" );
-	if( gScratch == NULL )
-	{
-		printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-		success = false;
-	}
-
-	gHigh = Mix_LoadWAV( "high.wav" );
-	if( gHigh == NULL )
-	{
-		printf( "Failed to load high sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-		success = false;
-	}
-
-	gMedium = Mix_LoadWAV( "medium.wav" );
-	if( gMedium == NULL )
-	{
-		printf( "Failed to load medium sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-		success = false;
-	}
-
-	gLow = Mix_LoadWAV( "low.wav" );
-	if( gLow == NULL )
-	{
-		printf( "Failed to load low sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+		if( !gPromptTexture.loadFromRenderedText( gFont, "Press Enter to reset start time.", textColor ) )
+		{
+			printf( "Unable to render prompt texture!\n" );
+			success = false;
+		}
 	}
 
 	return success; 
@@ -188,52 +160,9 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					else if( e.type == SDL_KEYDOWN )
-					{
-						switch ( e.key.keysym.sym )
-						{
-							case SDLK_1:
-								Mix_PlayChannel( -1, gHigh, 0 );
-								break;
-							
-							case SDLK_2: 
-								Mix_PlayChannel( -1, gMedium, 0 );
-								break;
-
-							case SDLK_3:
-								Mix_PlayChannel( -1, gLow, 0 );
-								break;
-							
-							case SDLK_4:
-								Mix_PlayChannel( -1, gScratch, 0 );
-								break;
-
-							case SDLK_9:
-								if( Mix_PlayingMusic() == 0 )
-								{
-									Mix_PlayMusic( gMusic, -1 );
-								}
-								else 
-								{
-									if( Mix_PausedMusic() == 1 )
-									{
-										Mix_ResumeMusic();
-									}
-									else
-									{
-										Mix_PauseMusic();
-									}
-								}
-								break;
-							
-							case SDLK_0:
-								Mix_HaltMusic();
-								break;
-						}
-					}
 				}
 
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0xFF );
 				SDL_RenderClear( gRenderer );
 
 				gPromptTexture.render( 0, 0 );
