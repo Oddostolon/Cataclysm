@@ -1,4 +1,6 @@
 sdl
+.vscode
+
 *.png
 *.wav
-.vscode
+*.ttf

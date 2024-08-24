@@ -7,6 +7,7 @@
 #include <cmath>
 #include "LTexture.h"
 #include "LButton.h"
+#include "LTimer.h"
 #include "constants.h"
 
 #pragma region FUNCTION_DECLARATIONS
@@ -20,7 +21,9 @@ SDL_Renderer* 	gRenderer 	= NULL;
 
 TTF_Font* 		gFont 		= NULL;
 
-LTexture		gPromptTexture( &gRenderer );
+LTexture		gS_PromptTexture( &gRenderer );
+LTexture 		gP_PromptTexture( &gRenderer );
+LTexture		gTimeTexture( &gRenderer );
 
 bool init()
 {
@@ -59,9 +62,9 @@ bool init()
 					printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
 					success = false;
 				}
-				if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
+				if( TTF_Init() == -1 )
 				{
-					printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+					printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
 					success = false;
 				}
 			}
@@ -75,7 +78,7 @@ bool loadMedia()
 {
 	bool success = true;
 
-	gFont = TTF_OpenFont( "lazy.ttf" );
+	gFont = TTF_OpenFont( "lazy.ttf", 28 );
 	if( gFont == NULL )
 	{
 		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
@@ -83,11 +86,16 @@ bool loadMedia()
 	}
 	else 
 	{
-		SDL_Color textColor = { 0, 0, 0, 255 };
+		SDL_Color textColor = { 255, 255, 255, 255 };
 
-		if( !gPromptTexture.loadFromRenderedText( gFont, "Press Enter to reset start time.", textColor ) )
+		if( !gS_PromptTexture.loadFromRenderedText( gFont, "Press S to start/stop the timer.", textColor ) )
 		{
-			printf( "Unable to render prompt texture!\n" );
+			printf( "Unable to render s_prompt texture!\n" );
+			success = false;
+		}
+		if( !gP_PromptTexture.loadFromRenderedText( gFont, "Press P to pause/resume the timer.", textColor ) )
+		{
+			printf( "Unable to render p_prompt texture!\n" );
 			success = false;
 		}
 	}
@@ -97,20 +105,9 @@ bool loadMedia()
 
 void close()
 {
-	gPromptTexture.free();
-
-	Mix_FreeChunk( gScratch );
-	Mix_FreeChunk( gHigh );
-	Mix_FreeChunk( gMedium );
-	Mix_FreeChunk( gLow );
-
-	gScratch = NULL; 
-	gHigh = NULL; 
-	gMedium = NULL;
-	gLow = NULL; 
-
-	Mix_FreeMusic( gMusic );
-	gMusic = NULL;
+	gS_PromptTexture.free();
+	gP_PromptTexture.free();
+	gTimeTexture.free();
 
 	//Destroy window
 	SDL_DestroyRenderer( gRenderer );
@@ -119,7 +116,6 @@ void close()
 	gRenderer = NULL;
 
 	//Quit SDL subsystems
-	Mix_Quit();
 	IMG_Quit();
 	SDL_Quit();
 }
@@ -146,8 +142,11 @@ int main( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			int xDir = 0;
-			int yDir = 0;
+			SDL_Color textColor = { 255, 255, 255, 255 };
+
+			LTimer timer;
+
+			std::stringstream timeText;
 
 			//While application is running
 			while( !quit )
@@ -160,12 +159,48 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
+					else if( e.type == SDL_KEYDOWN )
+					{
+						if( e.key.keysym.sym == SDLK_s )
+						{
+							if( timer.isStarted() )
+							{
+								timer.stop();
+							}
+							else 
+							{
+								timer.start();
+							}
+						}
+						else if( e.key.keysym.sym == SDLK_p )
+						{
+							if( timer.isPaused() )
+							{
+								timer.resume();
+							}
+							else 
+							{
+								timer.pause();
+							}
+						}
+					}
 				}
 
 				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				gPromptTexture.render( 0, 0 );
+				timeText.str("");
+				timeText << "Seconds since start time " << ( timer.getTicks() / 1000.f );
+
+				if( !gTimeTexture.loadFromRenderedText( gFont, timeText.str().c_str(), textColor ) )
+				{
+					printf( "Unable to render time texture!\n " );
+				}
+
+				gS_PromptTexture.render( ( SCREEN_WIDTH - gS_PromptTexture.getWidth() ) / 2, 0 );
+				gP_PromptTexture.render( ( SCREEN_WIDTH - gS_PromptTexture.getWidth() ) / 2, gS_PromptTexture.getHeight() + ( gS_PromptTexture.getHeight() / 2 ) );
+
+				gTimeTexture.render( ( SCREEN_WIDTH - gTimeTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gTimeTexture.getHeight() ) / 2 );
 				
                 SDL_RenderPresent( gRenderer );
 			}
