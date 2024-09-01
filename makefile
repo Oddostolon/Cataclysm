@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = sdl.cpp LTexture.cpp LButton.cpp LTimer.cpp
+OBJS = sdl.cpp wrappers/LTexture.cpp wrappers/LButton.cpp wrappers/LTimer.cpp Dot.cpp
 
 #CC specifies which compiler we're using
 CC = g++

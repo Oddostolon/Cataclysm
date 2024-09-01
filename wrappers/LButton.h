@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include "constants.h"
+#include "../constants.h"
 #include "LTexture.h"
 
 class LButton
