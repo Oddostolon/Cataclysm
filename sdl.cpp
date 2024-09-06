@@ -21,6 +21,7 @@ SDL_Window* 	gWindow 	= NULL;
 SDL_Renderer* 	gRenderer 	= NULL; 
 
 LTexture		gDotTexture( &gRenderer );
+LTexture		gBackgGroundTexture( &gRenderer );
 
 bool init()
 {
@@ -72,7 +73,12 @@ bool loadMedia()
 
 	if( !gDotTexture.loadFromFile( "dot.bmp" ) )
 	{
-		printf( "Failed to load texture file" );
+		printf( "Failed to load dot texture file" );
+		success = false;
+	}
+	if( !gBackgGroundTexture.loadFromFile( "bg.png" ) )
+	{
+		printf( "Failed to load background texture file" );
 		success = false;
 	}
 
@@ -96,33 +102,25 @@ void close()
 
 int main( int argc, char* args[] )
 {
-	//Start up SDL and create window
 	if( !init() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
-		//Load media
 		if( !loadMedia() )
 		{
 			printf( "Failed to load media!\n" );
 		}
 		else
 		{	
-			//Main loop flag
 			bool quit = false;
 
-			//Event handler
 			SDL_Event e;
 
-			Dot dot( &gDotTexture );
-
-			SDL_Rect wall;
-			wall.x = 300;
-            wall.y = 40;
-            wall.w = 40;
-            wall.h = 400;
+			Dot dot( &gDotTexture, 0, 0 );
+			
+			SDL_Rect camera  = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
 			while( !quit )
 			{
@@ -136,15 +134,33 @@ int main( int argc, char* args[] )
 					dot.handleEvent( e );
 				}
 
-				dot.move( wall );
+				dot.move();
+
+				camera.x = ( dot.getPosX() + Dot::DOT_WIDTH  / 2 ) - SCREEN_WIDTH  / 2;
+				camera.y = ( dot.getPosY() + Dot::DOT_HEIGHT / 2 ) - SCREEN_HEIGHT / 2;
+
+				if( camera.x < 0 )
+				{
+					camera.x = 0;
+				}
+				if( camera.y < 0 )
+				{
+					camera.y = 0;
+				}
+				if( camera.x > LEVEL_WIDTH - camera.w )
+				{
+					camera.x = LEVEL_WIDTH - camera.w;
+				}
+				if( camera.y > LEVEL_HEIGHT - camera.h )
+				{
+					camera.y = LEVEL_HEIGHT - camera.h; 
+				}
 
 				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );
-				SDL_RenderDrawRect( gRenderer, &wall );
-
-				dot.render();
+				gBackgGroundTexture.render( 0, 0, &camera );
+				dot.render( camera.x, camera.y );
 
                 SDL_RenderPresent( gRenderer );
 			}

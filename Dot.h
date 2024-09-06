@@ -1,7 +1,9 @@
 #pragma once
 
 #include <SDL2/SDL_events.h>
+#include <vector>
 #include "wrappers/LTexture.h"
+
 
 class Dot
 {
@@ -9,21 +11,27 @@ class Dot
 
         static const int DOT_WIDTH = 20;
         static const int DOT_HEIGHT = 20;
-        static const int DOT_VEL = 10;
+        static const int DOT_VEL = 1;
 
-        Dot( LTexture* texture );
+        Dot( LTexture* texture, int x, int y );
 
         void handleEvent( SDL_Event& e );
-        void move( SDL_Rect& wall );
-        void render();
+        void move();// std::vector<SDL_Rect>& otherColliders );
+        void render( int camX, int camY );
+
+        std::vector<SDL_Rect>& getColliders();
+        int getPosX();
+        int getPosY();
 
     private: 
 
         int mPosX, mPosY;
         int mVelX, mVelY;
 
-        SDL_Rect mCollider;
+        std::vector<SDL_Rect> mColliders;
         LTexture* mDotTexture;
 
-        bool checkCollision( SDL_Rect collidingObject );
+        bool checkCollision( std::vector<SDL_Rect>& otherColliders );
+
+        void shiftColliders();
 };

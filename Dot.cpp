@@ -1,16 +1,42 @@
 #include "Dot.h"
 #include "constants.h"
 
-Dot::Dot( LTexture* texture )
+Dot::Dot( LTexture* texture, int x, int y )
 {
-    mPosX = 0;
-    mPosY = 0;
+    mPosX = x;
+    mPosY = y;
+
+    mColliders.resize( 11 );
 
     mVelX = 0;
     mVelY = 0;
 
-    mCollider.w = DOT_WIDTH;
-    mCollider.h = DOT_HEIGHT;
+    mColliders[ 0 ].w = 6;
+    mColliders[ 1 ].w = 10;
+    mColliders[ 2 ].w = 14;
+    mColliders[ 3 ].w = 16;
+    mColliders[ 4 ].w = 18;
+    mColliders[ 5 ].w = 20;
+    mColliders[ 6 ].w = 18;
+    mColliders[ 7 ].w = 16;
+    mColliders[ 8 ].w = 14;
+    mColliders[ 9 ].w = 10;
+    mColliders[ 10 ].w = 6;
+
+    mColliders[ 0 ].h = 1;
+    mColliders[ 1 ].h = 1;
+    mColliders[ 2 ].h = 1;
+    mColliders[ 3 ].h = 2;
+    mColliders[ 4 ].h = 2;
+    mColliders[ 5 ].h = 6;
+    mColliders[ 6 ].h = 2;
+    mColliders[ 7 ].h = 2;
+    mColliders[ 8 ].h = 1;
+    mColliders[ 9 ].h = 1;
+    mColliders[ 10 ].h = 1;
+
+    shiftColliders();
+    
     mDotTexture = texture;
 }
 
@@ -38,66 +64,86 @@ void Dot::handleEvent( SDL_Event& e )
     }
 }
 
-void Dot::move( SDL_Rect& wall )
+void Dot::move()// std::vector<SDL_Rect>& otherColliders )
 {
     mPosX += mVelX;
-    mCollider.x = mPosX;
+    shiftColliders();
 
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) || checkCollision( wall ) )
+    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > LEVEL_WIDTH ))// || checkCollision( otherColliders ) )
     {
         mPosX -= mVelX;
+        shiftColliders();
     }
 
     mPosY += mVelY;
-    mCollider.y = mPosY;
+    shiftColliders();
 
-    if( ( mPosY < 0 ) || ( mPosY + DOT_WIDTH > SCREEN_HEIGHT ) || checkCollision( wall ) )
+    if( ( mPosY < 0 ) || ( mPosY + DOT_WIDTH > LEVEL_HEIGHT ))// || checkCollision( otherColliders ) )
     {
         mPosY -= mVelY;
+        shiftColliders();
     }
 }
 
-void Dot::render()
+void Dot::render(int camX, int camY )
 {
-    mDotTexture->render( mPosX, mPosY);
+    mDotTexture->render( mPosX - camX, mPosY - camY);
 }
 
-bool Dot::checkCollision( SDL_Rect collidingObject )
+bool Dot::checkCollision( std::vector<SDL_Rect>& otherColliders )
 {
-    int leftA, leftB; 
-    int rightA, rightB; 
-    int topA, topB; 
-    int bottomA, bottomB;
+    int leftA,      leftB; 
+    int rightA,     rightB; 
+    int topA,       topB; 
+    int bottomA,    bottomB;
 
-    leftA = mCollider.x;
-    rightA = mCollider.x + mCollider.w;
-    topA = mCollider.y;
-    bottomA = mCollider.y + mCollider.h;
-
-    leftB = collidingObject.x;
-    rightB = collidingObject.x + collidingObject.w;
-    topB = collidingObject.y;
-    bottomB = collidingObject.y + collidingObject.h;
-
-    if( bottomA <= topB )
+    for( int myBox = 0; myBox < mColliders.size(); myBox++ )
     {
-        return false;
+        leftA   = mColliders[ myBox ].x;
+        rightA  = mColliders[ myBox ].x + mColliders[ myBox ].w;
+        topA    = mColliders[ myBox ].y;
+        bottomA = mColliders[ myBox ].y + mColliders[ myBox ].h;
+
+        for( int otherBox = 0; otherBox < otherColliders.size(); otherBox++ )
+        {
+            leftB   = otherColliders[ otherBox ].x;
+            rightB  = otherColliders[ otherBox ].x + otherColliders[ otherBox ].w;
+            topB    = otherColliders[ otherBox ].y;
+            bottomB = otherColliders[ otherBox ].y + otherColliders[ otherBox ].h;
+
+            if( ( ( bottomA <= topB ) || ( topA >= bottomB ) || ( rightA <= leftB ) || ( leftA >= rightB ) ) == false )
+            {
+                return true;
+            }
+        }
     }
 
-    if( topA >= bottomB )
-    {
-        return false;
-    }
+    return false;
+}
 
-    if( rightA <= leftB )
-    {
-        return false;
-    }
+void Dot::shiftColliders()
+{
+    int r = 0;
 
-    if( leftA >= rightB )
+    for( int set = 0; set < mColliders.size(); ++set )
     {
-        return false;
+        mColliders[ set ].x = mPosX + ( DOT_WIDTH - mColliders[ set ].w ) / 2;
+        mColliders[ set ].y = mPosY + r;
+        r += mColliders[ set ].h;
     }
+}
 
-    return true;
+std::vector<SDL_Rect>& Dot::getColliders()
+{
+    return mColliders;
+}
+
+int Dot::getPosX()
+{
+    return mPosX;
+}
+
+int Dot::getPosY()
+{
+    return mPosY;
 }
