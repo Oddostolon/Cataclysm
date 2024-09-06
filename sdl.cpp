@@ -20,8 +20,9 @@ void close();
 SDL_Window* 	gWindow 	= NULL;
 SDL_Renderer* 	gRenderer 	= NULL; 
 
-LTexture		gDotTexture( &gRenderer );
-LTexture		gBackgGroundTexture( &gRenderer );
+LTexture		gPromptTextTexture( &gRenderer );
+LTexture		gInputTextTexture( &gRenderer );
+TTF_Font*		gFont;
 
 bool init()
 {
@@ -60,6 +61,11 @@ bool init()
 					printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
 					success = false;
 				}
+				if( TTF_Init() == -1 )
+				{
+					printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
+					success = false; 
+				}
 			}
 		}
 	}
@@ -71,15 +77,11 @@ bool loadMedia()
 {
 	bool success = true;
 
-	if( !gDotTexture.loadFromFile( "dot.bmp" ) )
+	gFont = TTF_OpenFont( "lazy.ttf", 28 );
+	if( gFont == NULL )
 	{
-		printf( "Failed to load dot texture file" );
-		success = false;
-	}
-	if( !gBackgGroundTexture.loadFromFile( "bg.png" ) )
-	{
-		printf( "Failed to load background texture file" );
-		success = false;
+		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
+		success = false; 
 	}
 
 	return success; 
@@ -87,7 +89,11 @@ bool loadMedia()
 
 void close()
 {
-	gDotTexture.free();
+	gPromptTextTexture.free();
+	gInputTextTexture.free();
+
+	TTF_CloseFont( gFont );
+	gFont = NULL; 
 
 	//Destroy window
 	SDL_DestroyRenderer( gRenderer );
@@ -118,49 +124,67 @@ int main( int argc, char* args[] )
 
 			SDL_Event e;
 
-			Dot dot( &gDotTexture, 0, 0 );
-			
-			SDL_Rect camera  = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+			SDL_Color textColor = { 0xFF, 0xFF, 0xFF, 0xFF};
 
+			std::string inputText = "Some Text";
+
+			gPromptTextTexture.loadFromRenderedText( gFont, "Enter Text:", textColor );
+			gInputTextTexture.loadFromRenderedText( gFont, inputText.c_str(), textColor );
+			
 			while( !quit )
 			{
+				bool renderText = false;
+
 				while( SDL_PollEvent( &e ) != 0 )
 				{
 					if( e.type == SDL_QUIT )
 					{
 						quit = true;
 					}
+					else if( e.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0 )
+					{
+						inputText.pop_back();
+						renderText = true;
+					}
+					else if( e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
+					{
+						SDL_SetClipboardText( inputText.c_str() );
+					}
+					else if( e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
+					{
+						char* tempText = SDL_GetClipboardText();
+						inputText = tempText; 
+						SDL_free( tempText);
 
-					dot.handleEvent( e );
+						renderText = true;
+					}
+					else if( e.type == SDL_TEXTINPUT )
+					{
+						if( !( SDL_GetModState() & KMOD_CTRL && ( e.text.text[ 0 ] == 'c' || e.text.text[ 0 ] == 'C' || e.text.text[ 0 ] == 'v' || e.text.text[ 0 ] == 'V' )))
+						{
+							inputText += e.text.text;
+							renderText = true;
+						}
+					}
 				}
 
-				dot.move();
-
-				camera.x = ( dot.getPosX() + Dot::DOT_WIDTH  / 2 ) - SCREEN_WIDTH  / 2;
-				camera.y = ( dot.getPosY() + Dot::DOT_HEIGHT / 2 ) - SCREEN_HEIGHT / 2;
-
-				if( camera.x < 0 )
+				if( renderText )
 				{
-					camera.x = 0;
-				}
-				if( camera.y < 0 )
-				{
-					camera.y = 0;
-				}
-				if( camera.x > LEVEL_WIDTH - camera.w )
-				{
-					camera.x = LEVEL_WIDTH - camera.w;
-				}
-				if( camera.y > LEVEL_HEIGHT - camera.h )
-				{
-					camera.y = LEVEL_HEIGHT - camera.h; 
+					if( inputText.length() > 0 )
+					{
+						gInputTextTexture.loadFromRenderedText( gFont, inputText.c_str(), textColor );
+					}
+					else 
+					{
+						gInputTextTexture.loadFromRenderedText( gFont, " ", textColor );
+					}
 				}
 
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				gBackgGroundTexture.render( 0, 0, &camera );
-				dot.render( camera.x, camera.y );
+				gPromptTextTexture.render( ( SCREEN_WIDTH - gPromptTextTexture.getWidth() ) / 2, 0 );
+                gInputTextTexture.render( ( SCREEN_WIDTH - gInputTextTexture.getWidth() ) / 2, gPromptTextTexture.getHeight() );
 
                 SDL_RenderPresent( gRenderer );
 			}
