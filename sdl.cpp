@@ -10,6 +10,7 @@
 #include "wrappers/LTimer.h"
 #include "constants.h"
 #include "Dot.h"
+#include "KeyboardInput.h"
 
 #pragma region FUNCTION_DECLARATIONS
 bool init();
@@ -141,30 +142,13 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					else if( e.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0 )
+					else if( SDL_GetModState() & KMOD_CTRL || e.key.keysym.sym == SDLK_BACKSPACE )
 					{
-						inputText.pop_back();
-						renderText = true;
-					}
-					else if( e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
-					{
-						SDL_SetClipboardText( inputText.c_str() );
-					}
-					else if( e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
-					{
-						char* tempText = SDL_GetClipboardText();
-						inputText = tempText; 
-						SDL_free( tempText);
-
-						renderText = true;
+						renderText = HandleControlEvents( &e, &inputText );
 					}
 					else if( e.type == SDL_TEXTINPUT )
 					{
-						if( !( SDL_GetModState() & KMOD_CTRL && ( e.text.text[ 0 ] == 'c' || e.text.text[ 0 ] == 'C' || e.text.text[ 0 ] == 'v' || e.text.text[ 0 ] == 'V' )))
-						{
-							inputText += e.text.text;
-							renderText = true;
-						}
+						renderText = HandleTextInput( &e, &inputText );
 					}
 				}
 
@@ -179,6 +163,8 @@ int main( int argc, char* args[] )
 						gInputTextTexture.loadFromRenderedText( gFont, " ", textColor );
 					}
 				}
+
+				//SDL_StopTextInput();
 
 				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0xFF );
 				SDL_RenderClear( gRenderer );

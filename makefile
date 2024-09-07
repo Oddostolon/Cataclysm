@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = sdl.cpp wrappers/LTexture.cpp wrappers/LButton.cpp wrappers/LTimer.cpp Dot.cpp
+OBJS = sdl.cpp wrappers/LTexture.cpp wrappers/LButton.cpp wrappers/LTimer.cpp Dot.cpp KeyboardInput.cpp
 
 #CC specifies which compiler we're using
 CC = g++
