@@ -21,6 +21,7 @@ class LTexture
 
         int getWidth();
         int getHeight();
+        SDL_Texture* getTexture();
 
     private:
         SDL_Texture* mTexture;

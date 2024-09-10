@@ -8,6 +8,7 @@
 #include "wrappers/LTexture.h"
 #include "wrappers/LButton.h"
 #include "wrappers/LTimer.h"
+#include "wrappers/LWindow.h"
 #include "constants.h"
 #include "Dot.h"
 #include "KeyboardInput.h"
@@ -18,19 +19,14 @@ bool loadMedia();
 void close();
 #pragma endregion
 
-SDL_Window* 	gWindow 	= NULL;
-SDL_Renderer* 	gRenderer 	= NULL; 
+LWindow 		gWindow;
 
-LTexture		gPromptTextTexture( &gRenderer );
-LTexture		gInputTextTexture( &gRenderer );
-TTF_Font*		gFont;
+LTexture 		gSceneTexture( gWindow.getRenderer() );
 
 bool init()
 {
-	//Initialization flag
 	bool success = true;
 
-	//Initialize SDL
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0 )
 	{
 		printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
@@ -38,35 +34,18 @@ bool init()
 	}
 	else
 	{
-		gWindow = SDL_CreateWindow( "Cataclysm", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow == NULL )
+		if( !gWindow.init() )
 		{
-			printf( "Window could not be created! SDL Error: %s\n:", SDL_GetError() );
+			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
 		}
 		else 
 		{
-			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer == NULL )
+			gWindow.createRenderer();
+			if( gWindow.getRenderer() == NULL )
 			{
-				printf( "Renderer could not be created! SDL Error %s\n", SDL_GetError() );
+				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
-			}
-			else
-			{
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-
-				int imgFlags = IMG_INIT_PNG;
-				if( !( IMG_Init( imgFlags ) & imgFlags))
-				{
-					printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
-					success = false;
-				}
-				if( TTF_Init() == -1 )
-				{
-					printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
-					success = false; 
-				}
 			}
 		}
 	}
@@ -78,11 +57,10 @@ bool loadMedia()
 {
 	bool success = true;
 
-	gFont = TTF_OpenFont( "lazy.ttf", 28 );
-	if( gFont == NULL )
+	if( !gSceneTexture.loadFromFile( "window.png" ) )
 	{
-		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
-		success = false; 
+		printf( "Could not load scene texture! SDL Error: %s\n", SDL_GetError() );
+		success = false;
 	}
 
 	return success; 
@@ -90,19 +68,9 @@ bool loadMedia()
 
 void close()
 {
-	gPromptTextTexture.free();
-	gInputTextTexture.free();
-
-	TTF_CloseFont( gFont );
-	gFont = NULL; 
-
-	//Destroy window
-	SDL_DestroyRenderer( gRenderer );
-	SDL_DestroyWindow( gWindow );
-	gWindow = NULL;
-	gRenderer = NULL;
-
-	//Quit SDL subsystems
+	gSceneTexture.free();
+	gWindow.free();
+	
 	IMG_Quit();
 	SDL_Quit();
 }
@@ -124,55 +92,28 @@ int main( int argc, char* args[] )
 			bool quit = false;
 
 			SDL_Event e;
-
-			SDL_Color textColor = { 0xFF, 0xFF, 0xFF, 0xFF};
-
-			std::string inputText = "Some Text";
-
-			gPromptTextTexture.loadFromRenderedText( gFont, "Enter Text:", textColor );
-			gInputTextTexture.loadFromRenderedText( gFont, inputText.c_str(), textColor );
 			
 			while( !quit )
 			{
-				bool renderText = false;
-
 				while( SDL_PollEvent( &e ) != 0 )
 				{
 					if( e.type == SDL_QUIT )
 					{
 						quit = true;
 					}
-					else if( SDL_GetModState() & KMOD_CTRL || e.key.keysym.sym == SDLK_BACKSPACE )
-					{
-						renderText = HandleControlEvents( &e, &inputText );
-					}
-					else if( e.type == SDL_TEXTINPUT )
-					{
-						renderText = HandleTextInput( &e, &inputText );
-					}
+
+					gWindow.handleEvent( e );
 				}
 
-				if( renderText )
+				if( !gWindow.isMinimized() )
 				{
-					if( inputText.length() > 0 )
-					{
-						gInputTextTexture.loadFromRenderedText( gFont, inputText.c_str(), textColor );
-					}
-					else 
-					{
-						gInputTextTexture.loadFromRenderedText( gFont, " ", textColor );
-					}
+					SDL_SetRenderDrawColor( *gWindow.getRenderer(), 0xFF, 0xFF, 0xFF, 0xFF );
+					SDL_RenderClear( *gWindow.getRenderer() );
+
+					gSceneTexture.render( 0, 0 );
+
+					SDL_RenderPresent( *gWindow.getRenderer() );
 				}
-
-				//SDL_StopTextInput();
-
-				SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				gPromptTextTexture.render( ( SCREEN_WIDTH - gPromptTextTexture.getWidth() ) / 2, 0 );
-                gInputTextTexture.render( ( SCREEN_WIDTH - gInputTextTexture.getWidth() ) / 2, gPromptTextTexture.getHeight() );
-
-                SDL_RenderPresent( gRenderer );
 			}
 		}
 	}

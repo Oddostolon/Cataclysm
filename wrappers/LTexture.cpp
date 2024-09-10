@@ -105,6 +105,11 @@ int LTexture::getHeight()
     return mHeight;
 }
 
+SDL_Texture *LTexture::getTexture()
+{
+    return mTexture;
+}
+
 void LTexture::free()
 {
     if ( mTexture != NULL )
