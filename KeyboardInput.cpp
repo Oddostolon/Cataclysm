@@ -1,4 +1,5 @@
 #include "KeyboardInput.h"
+#include <SDL2/SDL_stdinc.h>
 
 bool HandleTextInput( SDL_Event* e, std::string* input )
 {
@@ -24,7 +25,7 @@ bool HandleControlEvents(SDL_Event *e, std::string* input)
         {
             char* tempText = SDL_GetClipboardText();
             *input += tempText; 
-            SDL_free( tempText);
+            SDL_free(tempText);
 
             return true;
         }

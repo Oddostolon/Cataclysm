@@ -1,4 +1,5 @@
 #include "LButton.h"
+#include <memory>
 
 LButton::LButton()
 {
@@ -6,9 +7,9 @@ LButton::LButton()
     mPosition.y = 0;
 
     mCurrentSprite = BUTTON_SPRITE_MOUSE_OUT;
-    mButtonSpriteClip.w = BUTTON_WIDTH;
-    mButtonSpriteClip.h = BUTTON_HEIGHT;
-    mButtonSpriteClip.x = 0;
+    mButtonSpriteClip->w = BUTTON_WIDTH;
+    mButtonSpriteClip->h = BUTTON_HEIGHT;
+    mButtonSpriteClip->x = 0;
 }
 
 void LButton::setPosition( int x, int y )
@@ -17,14 +18,14 @@ void LButton::setPosition( int x, int y )
     mPosition.y = y;
 }
 
-void LButton::setSpriteSheet( LTexture* spriteSheetTexture )
+void LButton::setSpriteSheet( std::shared_ptr<LTexture> spriteSheetTexture )
 {
     mButtonSpriteSheetTexture = spriteSheetTexture;
 }
 
 void LButton::render()
 {
-    mButtonSpriteSheetTexture->render( mPosition.x, mPosition.y, &mButtonSpriteClip );
+    mButtonSpriteSheetTexture->render( mPosition.x, mPosition.y, mButtonSpriteClip );
 }
 
 void LButton::handleEvent( SDL_Event* e )
@@ -81,5 +82,5 @@ void LButton::handleEvent( SDL_Event* e )
 
 void LButton::setSpriteClip()
 {
-    mButtonSpriteClip.y = BUTTON_HEIGHT * mCurrentSprite;
+    mButtonSpriteClip->y = BUTTON_HEIGHT * mCurrentSprite;
 }

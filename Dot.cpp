@@ -1,7 +1,8 @@
 #include "Dot.h"
 #include "constants.h"
+#include <memory>
 
-Dot::Dot( LTexture* texture, int x, int y )
+Dot::Dot( std::shared_ptr<LTexture> texture, int x, int y )
 {
     mPosX = x;
     mPosY = y;

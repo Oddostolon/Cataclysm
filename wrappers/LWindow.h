@@ -2,6 +2,8 @@
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_video.h>
+#include <memory>
 
 class LWindow
 {
@@ -14,12 +16,10 @@ class LWindow
         bool createRenderer();
 
         void handleEvent( SDL_Event& e );
-        
-        void free();
 
         int getWidth();
         int getHeight();
-        SDL_Renderer** getRenderer();
+        std::shared_ptr<SDL_Renderer> getRenderer();
 
         bool hasMouseFocus();
         bool hasKeyboardFocus();
@@ -27,8 +27,8 @@ class LWindow
 
     private: 
 
-        SDL_Window* mWindow;
-        SDL_Renderer* mRenderer;
+        std::shared_ptr<SDL_Window> mWindow;
+        std::shared_ptr<SDL_Renderer> mRenderer;
 
         int mWidth;
         int mHeight;
