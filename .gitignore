@@ -1,6 +1,6 @@
 sdl
 .vscode
 
-*.png
-*.wav
-*.ttf
+tutorial/*.png
+tutorial/*.wav
+tutorial/*.ttf
