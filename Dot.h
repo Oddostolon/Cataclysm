@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL_events.h>
 #include <vector>
+#include <memory>
 #include "wrappers/LTexture.h"
 
 
@@ -13,7 +14,7 @@ class Dot
         static const int DOT_HEIGHT = 20;
         static const int DOT_VEL = 1;
 
-        Dot( LTexture* texture, int x, int y );
+        Dot( std::shared_ptr<LTexture> texture, int x, int y );
 
         void handleEvent( SDL_Event& e );
         void move();// std::vector<SDL_Rect>& otherColliders );
@@ -29,7 +30,7 @@ class Dot
         int mVelX, mVelY;
 
         std::vector<SDL_Rect> mColliders;
-        LTexture* mDotTexture;
+        std::shared_ptr<LTexture> mDotTexture;
 
         bool checkCollision( std::vector<SDL_Rect>& otherColliders );
 

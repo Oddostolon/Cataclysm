@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <memory>
 #include "../constants.h"
 #include "LTexture.h"
 
@@ -12,7 +13,7 @@ class LButton
 
         void setPosition( int x, int y );
 
-        void setSpriteSheet( LTexture* spriteSheetTexture );
+        void setSpriteSheet( std::shared_ptr<LTexture> spriteSheetTexture );
 
         void handleEvent( SDL_Event* e );
 
@@ -24,9 +25,9 @@ class LButton
 
         SDL_Point mPosition;
 
-        LTexture* mButtonSpriteSheetTexture;
+        std::shared_ptr<LTexture> mButtonSpriteSheetTexture;
 
-        SDL_Rect mButtonSpriteClip;
+        std::shared_ptr<SDL_Rect> mButtonSpriteClip;
 
         enum LButtonSprite
         {

@@ -1,5 +1,6 @@
 sdl
 .vscode
+cataclysm
 
 tutorial/*.png
 tutorial/*.wav

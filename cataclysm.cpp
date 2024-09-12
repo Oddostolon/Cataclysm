@@ -3,15 +3,9 @@
 #include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include <string>
-#include <sstream>
 #include <cmath>
 #include "wrappers/LTexture.h"
-#include "wrappers/LButton.h"
-#include "wrappers/LTimer.h"
 #include "wrappers/LWindow.h"
-#include "constants.h"
-#include "Dot.h"
-#include "KeyboardInput.h"
 
 #pragma region FUNCTION_DECLARATIONS
 bool init();
@@ -20,7 +14,6 @@ void close();
 #pragma endregion
 
 LWindow 		gWindow;
-
 LTexture 		gSceneTexture( gWindow.getRenderer() );
 
 bool init()
@@ -42,7 +35,7 @@ bool init()
 		else 
 		{
 			gWindow.createRenderer();
-			if( gWindow.getRenderer() == NULL )
+			if( !gWindow.getRenderer() )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -57,7 +50,7 @@ bool loadMedia()
 {
 	bool success = true;
 
-	if( !gSceneTexture.loadFromFile( "window.png" ) )
+	if( !gSceneTexture.loadFromFile( "Assets/CharacterSprites/Main.png" ) )
 	{
 		printf( "Could not load scene texture! SDL Error: %s\n", SDL_GetError() );
 		success = false;
@@ -69,7 +62,6 @@ bool loadMedia()
 void close()
 {
 	gSceneTexture.free();
-	gWindow.free();
 	
 	IMG_Quit();
 	SDL_Quit();
@@ -107,12 +99,12 @@ int main( int argc, char* args[] )
 
 				if( !gWindow.isMinimized() )
 				{
-					SDL_SetRenderDrawColor( *gWindow.getRenderer(), 0xFF, 0xFF, 0xFF, 0xFF );
-					SDL_RenderClear( *gWindow.getRenderer() );
+					SDL_SetRenderDrawColor( gWindow.getRenderer().get(), 0xFF, 0xFF, 0xFF, 0xFF );
+					SDL_RenderClear( gWindow.getRenderer().get() );
 
 					gSceneTexture.render( 0, 0 );
 
-					SDL_RenderPresent( *gWindow.getRenderer() );
+					SDL_RenderPresent( gWindow.getRenderer().get() );
 				}
 			}
 		}
