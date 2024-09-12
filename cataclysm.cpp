@@ -14,7 +14,7 @@ void close();
 #pragma endregion
 
 LWindow 		gWindow;
-LTexture 		gSceneTexture( gWindow.getRenderer() );
+LTexture 		gSceneTexture;
 
 bool init()
 {
@@ -50,6 +50,7 @@ bool loadMedia()
 {
 	bool success = true;
 
+	gSceneTexture.setRenderer(gWindow.getRenderer());
 	if( !gSceneTexture.loadFromFile( "Assets/CharacterSprites/Main.png" ) )
 	{
 		printf( "Could not load scene texture! SDL Error: %s\n", SDL_GetError() );

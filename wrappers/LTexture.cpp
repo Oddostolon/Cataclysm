@@ -1,6 +1,7 @@
 #include "LTexture.h"
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <memory>
 
 LTexture::LTexture(std::shared_ptr<SDL_Renderer> renderer)
@@ -20,18 +21,19 @@ bool LTexture::loadFromFile( std::string path)
 {
     free();
 
-    SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
-    if( loadedSurface == nullptr )
+    auto loadedSurface = std::shared_ptr<SDL_Surface>(IMG_Load( path.c_str() ), SDL_FreeSurface);
+    if( !loadedSurface )
     {
         printf( "Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError() );
     }
     else
     {
-        SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
+        SDL_SetColorKey( loadedSurface.get(), SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
         mTexture = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>(
-            SDL_CreateTextureFromSurface( mRenderer.get(), loadedSurface ), 
+            SDL_CreateTextureFromSurface( mRenderer.get(), loadedSurface.get() ), 
             SDL_DestroyTexture);
+
         if( !mTexture )
         {
             printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -41,8 +43,6 @@ bool LTexture::loadFromFile( std::string path)
             mWidth = loadedSurface->w;
             mHeight = loadedSurface->h;
         }
-
-        SDL_FreeSurface( loadedSurface );
     }
 
     return mTexture != nullptr;
@@ -51,6 +51,11 @@ bool LTexture::loadFromFile( std::string path)
 void LTexture::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
     SDL_SetTextureColorMod( mTexture.get(), red, green, blue );
+}
+
+void LTexture::setRenderer( std::shared_ptr<SDL_Renderer> renderer )
+{
+    mRenderer = renderer;
 }
 
 bool LTexture::loadFromRenderedText( TTF_Font* font, std::string textureText, SDL_Color textColor )
@@ -89,7 +94,7 @@ void LTexture::render( int x, int y, std::shared_ptr<SDL_Rect> clip /*= nullptr*
 {
     SDL_Rect renderQuad = { x, y, mWidth, mHeight };
 
-    if ( !clip )
+    if ( clip )
     {
         renderQuad.w = clip->w;
         renderQuad.h = clip->h;
