@@ -1,5 +1,4 @@
 #include "KeyboardInput.h"
-#include <SDL2/SDL_stdinc.h>
 
 bool HandleTextInput( SDL_Event* e, std::string* input )
 {

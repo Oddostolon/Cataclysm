@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL_timer.h>
+#include "../pch.h"
 
 class LTimer
 {

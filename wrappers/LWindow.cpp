@@ -1,11 +1,5 @@
 #include "LWindow.h"
 #include "../constants.h"
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
-#include <memory>
-#include <sstream>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
 
 LWindow::LWindow()
 {

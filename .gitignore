@@ -1,6 +1,7 @@
-sdl
 .vscode
 cataclysm
+cataclysm_debug
+*.o
 
 tutorial/*.png
 tutorial/*.wav

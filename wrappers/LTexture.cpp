@@ -1,8 +1,4 @@
 #include "LTexture.h"
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_surface.h>
-#include <memory>
 
 LTexture::LTexture(std::shared_ptr<SDL_Renderer> renderer)
 {
@@ -14,7 +10,7 @@ LTexture::LTexture(std::shared_ptr<SDL_Renderer> renderer)
 
 LTexture::~LTexture()
 {
-    free();
+    free(); 
 }
 
 bool LTexture::loadFromFile( std::string path)

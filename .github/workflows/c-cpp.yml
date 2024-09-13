@@ -20,11 +20,8 @@ jobs:
         sudo apt-get install -y build-essential \
                                 libsdl2-dev \
                                 libsdl2-image-dev \
-                                libsdl2-ttf-dev
-
-    - name: Verify SDL2 installation
-      run: |
-        dpkg -L libsdl2-dev
+                                libsdl2-ttf-dev \
+                                ccache
 
     - name: Build with make
       run: |
