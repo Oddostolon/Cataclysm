@@ -1,0 +1,24 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up C++ environment
+      uses: actions/setup-cpp@v2
+      with:
+        compiler: 'clang'
+        version: 'latest'
+    - name: cleanup before build
+      run: make clean
+    - name: build
+      run: make 
