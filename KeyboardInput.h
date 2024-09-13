@@ -1,7 +1,6 @@
 #pragma once 
 
-#include <SDL2/SDL.h> 
-#include <string>
+#include "pch.h"
 
 bool HandleTextInput( SDL_Event* e, std::string* input );
 

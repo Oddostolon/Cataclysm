@@ -1,8 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL_events.h>
-#include <vector>
-#include <memory>
+#include "pch.h"
 #include "wrappers/LTexture.h"
 
 

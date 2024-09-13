@@ -1,9 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_video.h>
-#include <memory>
+#include "../pch.h"
 
 class LWindow
 {

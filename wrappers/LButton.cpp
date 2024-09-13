@@ -1,5 +1,4 @@
 #include "LButton.h"
-#include <memory>
 
 LButton::LButton()
 {

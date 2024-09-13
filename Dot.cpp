@@ -1,6 +1,5 @@
 #include "Dot.h"
 #include "constants.h"
-#include <memory>
 
 Dot::Dot( std::shared_ptr<LTexture> texture, int x, int y )
 {

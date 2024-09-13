@@ -1,7 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-#include <memory>
+#include "../pch.h"
 #include "../constants.h"
 #include "LTexture.h"
 
