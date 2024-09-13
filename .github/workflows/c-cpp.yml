@@ -8,17 +8,17 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up C++ environment
-      uses: actions/setup-cpp@v2
-      with:
-        compiler: 'clang'
-        version: 'latest'
-    - name: cleanup before build
-      run: make clean
-    - name: build
-      run: make 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Build with make
+      run: |
+        make
