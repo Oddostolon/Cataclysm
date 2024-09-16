@@ -4,25 +4,23 @@
 
 class LTimer
 {
-    public:
+  public:
+    LTimer ();
 
-        LTimer();
+    void start ();
+    void stop ();
+    void pause ();
+    void resume ();
 
-        void start();
-        void stop();
-        void pause();
-        void resume();
+    Uint32 getTicks ();
 
-        Uint32 getTicks();
+    bool isStarted ();
+    bool isPaused ();
 
-        bool isStarted();
-        bool isPaused();
+  private:
+    Uint32 mStartTicks;
+    Uint32 mPausedTicks;
 
-    private:
-
-        Uint32 mStartTicks;
-        Uint32 mPausedTicks;
-
-        bool mPaused;
-        bool mStarted;
+    bool mPaused;
+    bool mStarted;
 };
