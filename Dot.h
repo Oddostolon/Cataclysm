@@ -3,34 +3,31 @@
 #include "pch.h"
 #include "wrappers/LTexture.h"
 
-
 class Dot
 {
-    public:
+  public:
+    static const int DOT_WIDTH = 20;
+    static const int DOT_HEIGHT = 20;
+    static const int DOT_VEL = 1;
 
-        static const int DOT_WIDTH = 20;
-        static const int DOT_HEIGHT = 20;
-        static const int DOT_VEL = 1;
+    Dot (std::shared_ptr<LTexture> texture, int x, int y);
 
-        Dot( std::shared_ptr<LTexture> texture, int x, int y );
+    void handleEvent (SDL_Event &e);
+    void move (); // std::vector<SDL_Rect>& otherColliders );
+    void render (int camX, int camY);
 
-        void handleEvent( SDL_Event& e );
-        void move();// std::vector<SDL_Rect>& otherColliders );
-        void render( int camX, int camY );
+    std::vector<SDL_Rect> &getColliders ();
+    int getPosX ();
+    int getPosY ();
 
-        std::vector<SDL_Rect>& getColliders();
-        int getPosX();
-        int getPosY();
+  private:
+    int mPosX, mPosY;
+    int mVelX, mVelY;
 
-    private: 
+    std::vector<SDL_Rect> mColliders;
+    std::shared_ptr<LTexture> mDotTexture;
 
-        int mPosX, mPosY;
-        int mVelX, mVelY;
+    bool checkCollision (std::vector<SDL_Rect> &otherColliders);
 
-        std::vector<SDL_Rect> mColliders;
-        std::shared_ptr<LTexture> mDotTexture;
-
-        bool checkCollision( std::vector<SDL_Rect>& otherColliders );
-
-        void shiftColliders();
+    void shiftColliders ();
 };
