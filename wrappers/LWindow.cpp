@@ -164,6 +164,10 @@ LWindow::handleEvent (SDL_Event &e)
         case SDL_WINDOWEVENT_RESTORED:
           mMinimized = false;
           break;
+
+        case SDL_WINDOWEVENT_CLOSE:
+          SDL_HideWindow (mWindow.get ());
+          break;
         }
 
       if (updateCaption)
@@ -206,7 +210,7 @@ LWindow::focus ()
 void
 LWindow::render ()
 {
-  if (!mMinimized)
+  if (true)
     {
       SDL_SetRenderDrawColor (mRenderer.get (), 0, 0, 0, 0xFF);
       SDL_RenderClear (mRenderer.get ());
