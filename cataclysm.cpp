@@ -1,13 +1,16 @@
+#include "constants.h"
 #include "wrappers/LTexture.h"
 #include "wrappers/LWindow.h"
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_hints.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_ttf.h>
 
-#pragma region FUNCTION_DECLARATIONS
 bool init ();
 bool loadMedia ();
 void close ();
-#pragma endregion
 
-LWindow gWindow;
+LWindow gWindows[TOTAL_WINDOWS];
 LTexture gSceneTexture;
 
 bool
@@ -15,26 +18,23 @@ init ()
 {
   bool success = true;
 
-  if (SDL_Init (SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+  if (SDL_Init (SDL_INIT_VIDEO) < 0)
     {
       printf ("SDL could not initialize! SDL Error: %s\n", SDL_GetError ());
       success = false;
     }
   else
     {
-      if (!gWindow.init ())
+      if (!SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "1"))
         {
-          printf ("Window could not be created! SDL Error: %s\n", SDL_GetError ());
-          success = false;
+          printf ("Warning: Linear texture filtering not enabled!");
         }
-      else
+
+      if (!gWindows[0].init ())
         {
-          gWindow.createRenderer ();
-          if (!gWindow.getRenderer ())
-            {
-              printf ("Renderer could not be created! SDL Error: %s\n", SDL_GetError ());
-              success = false;
-            }
+          printf ("Window initialization unsuccessful! SDL Error: %s\n",
+                  SDL_GetError ());
+          success = false;
         }
     }
 
@@ -46,10 +46,11 @@ loadMedia ()
 {
   bool success = true;
 
-  gSceneTexture.setRenderer (gWindow.getRenderer ());
+  gSceneTexture.setRenderer (gWindows[0].getRenderer ());
   if (!gSceneTexture.loadFromFile ("Assets/CharacterSprites/Main.png"))
     {
-      printf ("Could not load scene texture! SDL Error: %s\n", SDL_GetError ());
+      printf ("Could not load scene texture! SDL Error: %s\n",
+              SDL_GetError ());
       success = false;
     }
 
@@ -62,6 +63,7 @@ close ()
   gSceneTexture.free ();
 
   IMG_Quit ();
+  TTF_Quit ();
   SDL_Quit ();
 }
 
@@ -80,6 +82,11 @@ main (int argc, char *args[])
         }
       else
         {
+          for (int i = 1; i < TOTAL_WINDOWS; ++i)
+            {
+              gWindows[i].init ();
+            }
+
           bool quit = false;
 
           SDL_Event e;
@@ -93,23 +100,51 @@ main (int argc, char *args[])
                       quit = true;
                     }
 
-                  gWindow.handleEvent (e);
+                  for (int i = 0; i < TOTAL_WINDOWS; ++i)
+                    {
+                      gWindows[i].handleEvent (e);
+                    }
+
+                  if (e.type == SDL_KEYDOWN)
+                    {
+                      switch (e.key.keysym.sym)
+                        {
+                        case SDLK_1:
+                          gWindows[0].focus ();
+                          break;
+                        case SDLK_2:
+                          gWindows[1].focus ();
+                          break;
+                        case SDLK_3:
+                          gWindows[2].focus ();
+                          break;
+                        }
+                    }
                 }
 
-              if (!gWindow.isMinimized ())
+              for (LWindow window : gWindows)
                 {
-                  SDL_SetRenderDrawColor (gWindow.getRenderer ().get (), 0xFF, 0xFF, 0xFF, 0xFF);
-                  SDL_RenderClear (gWindow.getRenderer ().get ());
+                  window.render ();
+                }
 
-                  gSceneTexture.render (0, 0);
+              bool allWindowsClosed = true;
+              for (LWindow window : gWindows)
+                {
+                  if (window.isShown ())
+                    {
+                      allWindowsClosed = false;
+                      break;
+                    }
+                }
 
-                  SDL_RenderPresent (gWindow.getRenderer ().get ());
+              if (allWindowsClosed)
+                {
+                  quit = true;
                 }
             }
         }
     }
 
-  // Free resources and close SDL
   close ();
 
   return 0;

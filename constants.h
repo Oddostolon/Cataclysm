@@ -17,3 +17,4 @@ const int SCREEN_FPS = 5;
 const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 
 const int TOTAL_DATA = 10;
+const int TOTAL_WINDOWS = 3;

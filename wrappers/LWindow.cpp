@@ -1,5 +1,8 @@
 #include "LWindow.h"
 #include "../constants.h"
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_video.h>
 
 LWindow::LWindow ()
 {
@@ -9,6 +12,7 @@ LWindow::LWindow ()
   mKeyboardFocus = false;
   mFullScreen = false;
   mMinimized = false;
+  mShown = false;
   mWidth = 0;
   mHeight = 0;
 }
@@ -16,20 +20,31 @@ LWindow::LWindow ()
 bool
 LWindow::init ()
 {
-  mWindow = std::shared_ptr<SDL_Window> (SDL_CreateWindow ("Cataclysm", SDL_WINDOWPOS_UNDEFINED,
-                                                           SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT,
-                                                           SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE),
-                                         SDL_DestroyWindow);
+  mWindow = std::shared_ptr<SDL_Window> (
+      SDL_CreateWindow ("Cataclysm", SDL_WINDOWPOS_UNDEFINED,
+                        SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT,
+                        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE),
+      SDL_DestroyWindow);
 
-  if (mWindow)
+  if (!mWindow)
     {
-      mMouseFocus = true;
-      mKeyboardFocus = true;
-      mWidth = SCREEN_WIDTH;
-      mHeight = SCREEN_HEIGHT;
+      return false;
     }
 
-  return mWindow != nullptr;
+  mMouseFocus = true;
+  mKeyboardFocus = true;
+  mWidth = SCREEN_WIDTH;
+  mHeight = SCREEN_HEIGHT;
+  mWindowId = SDL_GetWindowID (mWindow.get ());
+  mShown = true;
+
+  if (!createRenderer ())
+    {
+      printf ("Failed to create renderer! SDL Error: %s\n", SDL_GetError ());
+      return false;
+    }
+
+  return mWindow && mRenderer;
 }
 
 bool
@@ -43,26 +58,47 @@ LWindow::createRenderer ()
     }
 
   mRenderer = std::shared_ptr<SDL_Renderer> (
-      SDL_CreateRenderer (mWindow.get (), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC),
+      SDL_CreateRenderer (mWindow.get (), -1,
+                          SDL_RENDERER_ACCELERATED
+                              | SDL_RENDERER_PRESENTVSYNC),
       SDL_DestroyRenderer);
   if (!mRenderer)
     {
-      printf ("Renderer could not be created! SDL Error %s\n", SDL_GetError ());
+      printf ("Renderer could not be created! SDL Error %s\n",
+              SDL_GetError ());
       success = false;
     }
   else
     {
       SDL_SetRenderDrawColor (mRenderer.get (), 0xFF, 0xFF, 0xFF, 0xFF);
+    }
 
-      int imgFlags = IMG_INIT_PNG;
+  return success;
+}
+
+bool
+LWindow::initSDLSubsystems ()
+{
+  bool success = true;
+
+  int imgFlags = IMG_INIT_PNG;
+  int initializedFlags = IMG_Init (0);
+  if ((imgFlags & initializedFlags) != initializedFlags)
+    {
       if (!(IMG_Init (imgFlags) & imgFlags))
         {
-          printf ("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError ());
+          printf ("SDL_image could not initialize! SDL_image Error: %s\n",
+                  IMG_GetError ());
           success = false;
         }
+    }
+
+  if (!TTF_WasInit ())
+    {
       if (TTF_Init () == -1)
         {
-          printf ("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError ());
+          printf ("SDL_ttf could not initialize! SDL_ttf Error: %s\n",
+                  TTF_GetError ());
           success = false;
         }
     }
@@ -73,12 +109,20 @@ LWindow::createRenderer ()
 void
 LWindow::handleEvent (SDL_Event &e)
 {
-  if (e.type == SDL_WINDOWEVENT)
+  if (e.type == SDL_WINDOWEVENT && e.window.windowID == mWindowId)
     {
       bool updateCaption = false;
 
       switch (e.window.event)
         {
+        case SDL_WINDOWEVENT_SHOWN:
+          mShown = true;
+          break;
+
+        case SDL_WINDOWEVENT_HIDDEN:
+          mShown = false;
+          break;
+
         case SDL_WINDOWEVENT_SIZE_CHANGED:
           mWidth = e.window.data1;
           mHeight = e.window.data2;
@@ -120,12 +164,17 @@ LWindow::handleEvent (SDL_Event &e)
         case SDL_WINDOWEVENT_RESTORED:
           mMinimized = false;
           break;
+
+        case SDL_WINDOWEVENT_CLOSE:
+          SDL_HideWindow (mWindow.get ());
+          break;
         }
 
       if (updateCaption)
         {
           std::stringstream caption;
-          caption << "Cataclysm - MouseFocus:" << (mMouseFocus ? "On " : "Off ")
+          caption << "Cataclysm - MouseFocus:"
+                  << (mMouseFocus ? "On " : "Off ")
                   << "KeyboardFocus: " << (mKeyboardFocus ? "On " : "Off ");
           SDL_SetWindowTitle (mWindow.get (), caption.str ().c_str ());
         }
@@ -139,14 +188,36 @@ LWindow::handleEvent (SDL_Event &e)
         }
       else
         {
-          SDL_SetWindowFullscreen (mWindow.get (), SDL_WINDOW_FULLSCREEN_DESKTOP);
+          SDL_SetWindowFullscreen (mWindow.get (),
+                                   SDL_WINDOW_FULLSCREEN_DESKTOP);
           mFullScreen = true;
           mMinimized = false;
         }
     }
 }
 
-#pragma region GETTERS
+void
+LWindow::focus ()
+{
+  if (!mShown)
+    {
+      SDL_ShowWindow (mWindow.get ());
+    }
+
+  SDL_RaiseWindow (mWindow.get ());
+}
+
+void
+LWindow::render ()
+{
+  if (true)
+    {
+      SDL_SetRenderDrawColor (mRenderer.get (), 0, 0, 0, 0xFF);
+      SDL_RenderClear (mRenderer.get ());
+      SDL_RenderPresent (mRenderer.get ());
+    }
+}
+
 int
 LWindow::getWidth ()
 {
@@ -157,6 +228,12 @@ int
 LWindow::getHeight ()
 {
   return mHeight;
+}
+
+int
+LWindow::getWindowId ()
+{
+  return mWindowId;
 }
 
 std::shared_ptr<SDL_Renderer>
@@ -182,4 +259,9 @@ LWindow::isMinimized ()
 {
   return mMinimized;
 }
-#pragma endregion
+
+bool
+LWindow::isShown ()
+{
+  return mShown;
+}
