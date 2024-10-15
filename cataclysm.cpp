@@ -5,6 +5,9 @@
 #include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_ttf.h>
+#include <fstream>
+#include <string>
+
 
 bool init ();
 bool loadMedia ();
